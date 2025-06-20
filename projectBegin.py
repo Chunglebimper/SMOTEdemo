@@ -17,14 +17,18 @@ from imblearn.over_sampling import SMOTE
 from sklearn.linear_model import LogisticRegression
 import os
 import pandas as pd
+from torchvision import transforms
 
-
+# essential ph 1 phone
 
 """
 Traditionally, SMOTE is used on binary data 
 https://www.youtube.com/watch?v=U3X98xZ4_no
 The problem with our data is that we need to apply SMOTE to indiviudal classes. This is a problem becuase we have to read the GT and identify areas with only the classes we want.
 Do we feed in the patches with this data or the entire image?
+
+1. FEED THE PATHCES TO SMOTE WHERE THERE ARE CLASSES 3, 4; be sure to seperate training from validation
+
 """
 def mkdir_results():
     os.makedirs('./results', exist_ok=True)  # create output directory
@@ -39,24 +43,26 @@ def mkdir_results():
 def SMOTE_func(X_train, Y_train, x_train, y_train, X_test, Y_test, target):
     """
     This function is meant to read in the class distribution and not augment data yet
-    :param X_train:
-    :param Y_train:
+    :param X_train: Matrix containing the data which have to be sampled.
+    :param Y_train: Corresponding label for each sample in X.
     :param x_train:
     :param y_train:
     :param X_test:
     :param Y_test:
     :return:
     """
+    print(Y_train)
+    Y_train = Y_train.flatten()
     unique, count = np.unique(Y_train, return_counts=True)
     Y_train_dict_value_count = { k:v for (k,v) in zip(unique, count)}
-    print("Before SMOTE patches: " + Y_train_dict_value_count)
+    print("Before SMOTE patches: " + str(Y_train_dict_value_count))
 
-    sm = SMOTE(random_state=12, ratio=1.0)              # key values to change
-    x_train_res, y_train_res = sm.fit_sample(X_train, Y_train)
+    sm = SMOTE(random_state=12)              # key values to change
+    x_train_res, y_train_res = sm.fit_resample(X_train, Y_train)  # synthesized data:
 
     unique, count = np.unique(y_train, return_counts=True)
     y_train_smote_value_count = { k:v for (k, v) in zip(unique, count)}
-    print("After SMOTE patches: " + y_train_smote_value_count)
+    print("After SMOTE patches: " + str(y_train_smote_value_count))
 
     clf = LogisticRegression().fit(x_train_res, y_train_res)
     Y_Test_Pred = clf.predict(X_test)
@@ -80,14 +86,36 @@ def train_and_eval(use_glcm, patch_size, stride, batch_size, epochs, lr, root):
 
     # Load dataset with patch size and stride
     dataset = DamageDataset(train_pre, train_post, train_mask, patch_size=patch_size, stride=stride)
+    print(f'{len(dataset)} samples to be scanned')  # how is it getting that many images?
     #analyze_class_distribution(dataset)
 
+    # Splits the dataset 80% training, 20% validation
+    # May need to change train_size to adjust for SMOTE synthesized data
     train_size = int(0.8 * len(dataset))
     val_size = len(dataset) - train_size
     train_dataset, val_dataset = random_split(dataset, [train_size, val_size])
 
     #EXTRACT PATCHES FOR SMOTE:
     pre_patch, post_patch, mask_patch, patch_id = dataset[0]
-    print(pre_patch, post_patch, mask_patch, patch_id)
+    # for every sample i
+        # dataset[i][2] extract mask
+    #print(pre_patch, post_patch, mask_patch, patch_id)
+    #print(dataset)
+    print(100 * "-")
+    print("Begin SMOTE function...")
+    print("Creating mask array...")
+    print(type(dataset))
+    from_tensor = []
+    for i, x in enumerate(dataset):
+        mask = x[2] # gives me mask for element as tensor
+        temp_np_array = mask.cpu().numpy() # Tensor to numpy
+        print(f"Mask {i} shape: {temp_np_array.shape}")
+        from_tensor.append(temp_np_array)
+    #print(dataset[0][2])
+    dataset_masks_np = np.array(from_tensor)
+    print(dataset_masks_np)
+    print("Mask array generated")
+    SMOTE_func(dataset, dataset_masks_np, dataset, dataset, dataset, dataset, dataset)
+
 
 train_and_eval(False, 64, 32, 4, 2, 16, "./data")

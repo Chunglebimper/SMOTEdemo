@@ -27,23 +27,28 @@ class DamageDataset(Dataset):
             transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
         ])
 
-        # Collect image samples
+        # Collect image samples: from GT
         self.filenames = sorted([f for f in os.listdir(mask_dir) if f.endswith(f"_{mode}_disaster_target.png")])
         self.samples = []
         for fname in self.filenames:
             basename = fname.replace(f"_{mode}_disaster_target.png", "")
             mask = np.array(Image.open(os.path.join(self.mask_dir, fname)).convert('L'))
             h, w = mask.shape
+            # for y in range (0, 512-64, 32)
             for y in range(0, h - patch_size + 1, stride):
+                # for y in range (0, 512-64, 32)
                 for x in range(0, w - patch_size + 1, stride):
                     patch = mask[y:y + patch_size, x:x + patch_size]
-                    include = (4 in patch or 3 in patch or 2 in patch or np.random.rand() < 0.1)
+                    include = (4 in patch or 3 in patch or 2 in patch or np.random.rand() < 0.1) #clips patches
                     if include:
-                        is_priority = any(cls in patch for cls in [2, 3, 4])
-                        self.samples.append((basename, x, y, is_priority))
+                        is_priority = any(cls in patch for cls in [2, 3, 4]) # if it is minority
+                        self.samples.append((basename, x, y, is_priority)) # saves patch to list
 
     def __len__(self):
         return len(self.samples)
+
+    def __str__(self):
+        return str(self.samples)
 
     def __getitem__(self, idx):
         basename, x, y, is_priority = self.samples[idx]

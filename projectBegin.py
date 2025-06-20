@@ -25,9 +25,13 @@ from torchvision import transforms
 Traditionally, SMOTE is used on binary data 
 https://www.youtube.com/watch?v=U3X98xZ4_no
 The problem with our data is that we need to apply SMOTE to indiviudal classes. This is a problem becuase we have to read the GT and identify areas with only the classes we want.
-Do we feed in the patches with this data or the entire image?
+Furthermore, we do not have binary data (True/False type) we have 0-4 (5 types)
 
-1. FEED THE PATHCES TO SMOTE WHERE THERE ARE CLASSES 3, 4; be sure to seperate training from validation
+
+1. FEED THE PATCHES TO SMOTE WHERE THERE ARE CLASSES 3, 4; be sure to seperate training from validation
+2. Find a way to get the (3,64,64) to be read as one value: 
+    * Consider RGB to hex: (3, 64, 64) where the first dimension, 3, is roled into 
+    * Justification: X_train and Y_train must be the same dimensions 
 
 """
 def mkdir_results():
@@ -73,6 +77,17 @@ def SMOTE_func(X_train, Y_train, x_train, y_train, X_test, Y_test, target):
 
 
 def train_and_eval(use_glcm, patch_size, stride, batch_size, epochs, lr, root):
+    """
+    This file is modified from the original located in another repo
+    :param use_glcm:
+    :param patch_size:
+    :param stride:
+    :param batch_size:
+    :param epochs:
+    :param lr:
+    :param root:
+    :return:
+    """
     results_path = mkdir_results()                      # works to place contents of each individual run into respective directory
     os.makedirs(results_path, exist_ok=True)            # create output directory
 
@@ -105,17 +120,26 @@ def train_and_eval(use_glcm, patch_size, stride, batch_size, epochs, lr, root):
     print("Begin SMOTE function...")
     print("Creating mask array...")
     print(type(dataset))
-    from_tensor = []
+
+    from_tensor_mask = []
+    from_tensor_post = []
     for i, x in enumerate(dataset):
-        mask = x[2] # gives me mask for element as tensor
-        temp_np_array = mask.cpu().numpy() # Tensor to numpy
-        print(f"Mask {i} shape: {temp_np_array.shape}")
-        from_tensor.append(temp_np_array)
-    #print(dataset[0][2])
-    dataset_masks_np = np.array(from_tensor)
-    print(dataset_masks_np)
+        mask = x[2]                                     # gives me mask for element as tensor
+        post = x[1]                                     #          post image       as tensor
+        temp_np_array_mask = mask.cpu().numpy()         # Tensor to numpy
+        temp_np_array_post = post.cpu().numpy()
+        from_tensor_mask.append(temp_np_array_mask)
+        from_tensor_post.append(temp_np_array_post)
+        print(f"Mask {i} shape: {temp_np_array_mask.shape}")
+        print(f"Post {i} shape: {temp_np_array_post.shape}")
+        #print(str(temp_np_array_post))
+
+
+    dataset_masks_np = np.array(from_tensor_mask)
+    dataset_posts_np = np.array(from_tensor_post)
+    #print(dataset_masks_np)
     print("Mask array generated")
-    SMOTE_func(dataset, dataset_masks_np, dataset, dataset, dataset, dataset, dataset)
+    SMOTE_func(dataset_posts_np, dataset_masks_np, dataset, dataset, dataset, dataset, dataset)
 
 
 train_and_eval(False, 64, 32, 4, 2, 16, "./data")

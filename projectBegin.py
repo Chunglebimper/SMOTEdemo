@@ -55,8 +55,11 @@ def SMOTE_func(X_train, Y_train, x_train, y_train, X_test, Y_test, target):
     :param Y_test:
     :return:
     """
+    #X_train = X_train.reshape(X_train.shape[0], -1) #flatten posts
+    X_train = X_train.flatten()
     print(Y_train)
     Y_train = Y_train.flatten()
+    print(f"Shapes:\t {X_train.shape()}\n\t{Y_train.shape()}")
     unique, count = np.unique(Y_train, return_counts=True)
     Y_train_dict_value_count = { k:v for (k,v) in zip(unique, count)}
     print("Before SMOTE patches: " + str(Y_train_dict_value_count))
@@ -139,6 +142,8 @@ def train_and_eval(use_glcm, patch_size, stride, batch_size, epochs, lr, root):
     dataset_posts_np = np.array(from_tensor_post)
     #print(dataset_masks_np)
     print("Mask array generated")
+
+
     SMOTE_func(dataset_posts_np, dataset_masks_np, dataset, dataset, dataset, dataset, dataset)
 
 

@@ -18,7 +18,12 @@ from sklearn.linear_model import LogisticRegression
 import os
 import pandas as pd
 from torchvision import transforms
-from smote_func import smote_func
+
+try:
+    from smote_func import smote_func, alt_func
+except Exception as e:
+    print(e)
+
 
 def mkdir_results():
     os.makedirs('./results', exist_ok=True)  # create output directory
@@ -55,7 +60,8 @@ def train_and_eval(use_glcm, patch_size, stride, batch_size, epochs, lr, root):
 
     print("Begin SMOTE function...")
     # --------------------------
-    smote_func(train_dataset)
+    #alt_func(train_dataset)
+    smote_func(train_dataset, patch_size=patch_size)
     # --------------------------
 
 

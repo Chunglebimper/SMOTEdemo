@@ -19,23 +19,10 @@ import os
 import pandas as pd
 from torchvision import transforms
 
-# essential ph 1 phone
 
-"""
-Traditionally, SMOTE is used on binary data 
-https://www.youtube.com/watch?v=U3X98xZ4_no
-The problem with our data is that we need to apply SMOTE to indiviudal classes. This is a problem becuase we have to read the GT and identify areas with only the classes we want.
-Furthermore, we do not have binary data (True/False type) we have 0-4 (5 types)
-https://medium.com/@fatimazahra.belharar/enhancing-classification-accuracy-for-imbalanced-image-data-using-smote-41737783a720 
 
-0. BEWARE OF USING SMOTE ON AUGMENTED DATA; O
-1. FEED THE PATCHES TO SMOTE WHERE THERE ARE CLASSES 3, 4; be sure to seperate training from validation
 
-2. Find a way to get the (3,64,64) to be read as one value: 
-    * Consider RGB to hex: (3, 64, 64) where the first dimension, 3, is roled into 
-    * Justification: X_train and Y_train must be the same dimensions 
 
-"""
 def mkdir_results():
     os.makedirs('./results', exist_ok=True)  # create output directory
     highest = -1
@@ -44,45 +31,6 @@ def mkdir_results():
             highest = int(folder)
     highest += 1
     return os.path.join('./results', f'{highest}')
-
-
-def SMOTE_func(X_train, Y_train, x_train, y_train, X_test, Y_test, target):
-    """
-    This function is meant to read in the class distribution and not augment data yet
-    :param X_train: Matrix containing the data which have to be sampled.
-    :param Y_train: Corresponding label for each sample in X.
-    :param x_train:
-    :param y_train:
-    :param X_test:
-    :param Y_test:
-    :return:
-    """
-    #X_train = X_train.reshape(X_train.shape[0], -1) #flatten posts
-    X_train = X_train.flatten()
-    print(Y_train)
-    Y_train = Y_train.flatten()
-    print(X_train)
-    print(Y_train)
-    #print(f"Shapes:\t {X_train.shape()}\n\t{Y_train.shape()}")
-    unique, count = np.unique(Y_train, return_counts=True)
-    Y_train_dict_value_count = { k:v for (k,v) in zip(unique, count)}
-    print("Before SMOTE patches: " + str(Y_train_dict_value_count))
-
-    sm = SMOTE(random_state=12)              # key values to change
-    x_train_res, y_train_res = sm.fit_resample(X_train, Y_train)  # synthesized data:
-
-    unique, count = np.unique(y_train, return_counts=True)
-    y_train_smote_value_count = { k:v for (k, v) in zip(unique, count)}
-    print("After SMOTE patches: " + str(y_train_smote_value_count))
-
-    clf = LogisticRegression().fit(x_train_res, y_train_res)
-    Y_Test_Pred = clf.predict(X_test)
-
-    pd.crosstab(pd.Series(Y_Test_Pred, name = 'Predicted'),
-                pd.Series(Y_test[target], name = 'Actual' ))
-
-
-
 def train_and_eval(use_glcm, patch_size, stride, batch_size, epochs, lr, root):
     """
     This file is modified from the original located in another repo
@@ -108,7 +56,7 @@ def train_and_eval(use_glcm, patch_size, stride, batch_size, epochs, lr, root):
 
     # Load dataset with patch size and stride
     dataset = DamageDataset(train_pre, train_post, train_mask, patch_size=patch_size, stride=stride)
-    print(f'{len(dataset)} samples to be scanned')  # how is it getting that many images?
+    print(f'{len(dataset)} samples to be scanned')
     #analyze_class_distribution(dataset)
 
     # Splits the dataset 80% training, 20% validation
@@ -150,5 +98,23 @@ def train_and_eval(use_glcm, patch_size, stride, batch_size, epochs, lr, root):
 
     SMOTE_func(dataset_posts_np, dataset_masks_np, dataset, dataset, dataset, dataset, dataset)
 
+def SMOTE_func(X_train, Y_train, x_train, y_train, X_test, Y_test, target):
+    """
+    This function is meant to read in the class distribution and not augment data yet
+    :param X_train: Matrix containing the data which have to be sampled.
+    :param Y_train: Corresponding label for each sample in X.
+    :param x_train:
+    :param y_train:
+    :param X_test:
+    :param Y_test:
+    :return:
+    """
+
+    #X_train = X_train.reshape(X_train.shape[0], -1) #flatten posts
+    X_train = X_train.flatten()
+    print(Y_train)
+    Y_train = Y_train.flatten()
+    print(X_train)
+    print(Y_train)
 
 train_and_eval(False, 64, 32, 4, 2, 16, "./data")

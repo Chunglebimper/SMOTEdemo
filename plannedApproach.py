@@ -55,9 +55,7 @@ def train_and_eval(use_glcm, patch_size, stride, batch_size, epochs, lr, root):
 
     print("Begin SMOTE function...")
     # --------------------------
-    X_train = train_dataset
-    Y_train = train_dataset
-    smote_func(X_train, Y_train, None, None, None, None, None)
+    smote_func(train_dataset)
     # --------------------------
 
 

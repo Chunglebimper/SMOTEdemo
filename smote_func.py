@@ -17,11 +17,12 @@ from sklearn.model_selection import train_test_split
 from numpy import load
 import matplotlib.pyplot as plt
 imagegen = ImageDataGenerator()
+import rasterio
 
 def display(boolean, post_patch_tensor):
     if boolean:
-        img_np = post_patch_tensor.permute(1, 2, 0).numpy()  # shape: (64, 64, 3)
-        plt.imshow(img_np)
+        img_tensor = post_patch_tensor.permute(1, 2, 0)  # shape: (64, 64, 3)
+        plt.imshow(img_tensor)
         plt.axis('off')
         plt.show()
 
@@ -69,17 +70,26 @@ def smote_func(training_data, patch_size):
         #print(np.shape(mask_array))
     #except Exception as e:
         #print(f"Check device for tensor: {e}")
-    
-    post_patch_np_edit = post_patch_np.reshape(patch_size * patch_size * 3)
+
+    # This feeds in a single band
+    post_patch_np_edit = np.delete(post_patch_np, 0, axis=0)
+    post_patch_np_edit = np.delete(post_patch_np_edit, 0, axis=0)
+    post_patch_np_edit = post_patch_np_edit.squeeze()
     print(f"Before changes: {np.shape(post_patch_np)}, After changes {np.shape(post_patch_np_edit)}")
-    mask_patch_np_edit = mask_patch_np.reshape(patch_size * patch_size)
-    #mask_patch_np_edit = 0
+
+    mask_patch_np_edit = mask_patch_np
     print(f"Before changes: {np.shape(mask_patch_np)}, After changes {np.shape(mask_patch_np_edit)}")
 
     # from array of arrays? convert to an array
-    post_patch_np_edit = post_patch_np_edit.reshape(-1, 1)
-    mask_patch_np_edit = mask_patch_np_edit.reshape(-1, 1)
+    #post_patch_np_edit = post_patch_np_edit.reshape(2, 1)
+    #mask_patch_np_edit = mask_patch_np_edit.reshape(2, 1)
 
+    np.set_printoptions(threshold=np.inf, linewidth=64)
+    print(post_patch_np_edit)
+
+    mask_patch_np_edit = np.zeros(64)
+    for i in range(6):
+        mask_patch_np_edit[i+23] = 1
     sm = SMOTE(random_state=2)
     x_train_res, y_train_res = sm.fit_resample(post_patch_np_edit, mask_patch_np_edit)  # synthesized data:
     unique, count = np.unique(y_train, return_counts=True)

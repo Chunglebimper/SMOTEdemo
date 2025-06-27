@@ -63,7 +63,7 @@ def train_and_eval(use_glcm, patch_size, stride, batch_size, epochs, lr, root):
     #alt_func(train_dataset)
     smote_func(train_dataset, patch_size=patch_size)
     # --------------------------
-
+    print("End SMOTE function...")
 
     train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
     val_loader = DataLoader(val_dataset, batch_size=batch_size)

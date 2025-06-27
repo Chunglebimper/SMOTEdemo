@@ -21,7 +21,12 @@ import rasterio
 
 def display(boolean, post_patch_tensor):
     if boolean:
-        img_tensor = post_patch_tensor.permute(1, 2, 0)  # shape: (64, 64, 3)
+        print(np.shape(post_patch_tensor))
+        try:
+            img_tensor = post_patch_tensor.permute(1, 2, 0)  # shape: (64, 64, 3)
+        except Exception as e:
+            print(e)
+
         plt.imshow(img_tensor)
         plt.axis('off')
         plt.show()
@@ -47,7 +52,7 @@ def smote_func(training_data, patch_size):
     X_train = training_data[patchNum]
     post_patch_tensor = X_train[1]                       # shape: (3, 64, 64)
     mask_patch_tensor = X_train[2]                       # shape: (64, 64)
-    display(False, post_patch_tensor)
+    display(True, post_patch_tensor)
 
     try:
         print("Begin band handling and conversion...")
@@ -80,20 +85,31 @@ def smote_func(training_data, patch_size):
     mask_patch_np_edit = mask_patch_np
     print(f"Before changes: {np.shape(mask_patch_np)}, After changes {np.shape(mask_patch_np_edit)}")
 
-    # from array of arrays? convert to an array
-    #post_patch_np_edit = post_patch_np_edit.reshape(2, 1)
-    #mask_patch_np_edit = mask_patch_np_edit.reshape(2, 1)
 
-    np.set_printoptions(threshold=np.inf, linewidth=64)
-    print(post_patch_np_edit)
+
+
+
+
+
+
 
     mask_patch_np_edit = np.zeros(64)
     for i in range(6):
-        mask_patch_np_edit[i+23] = 1
+        mask_patch_np_edit[i+10] = 1
+
+    unique, count = np.unique(mask_patch_np_edit, return_counts=True)
+    Y_train_dict_value_count = {k: v for (k, v) in zip(unique, count)}
+    print("Before SMOTE patches: " + str(Y_train_dict_value_count))
+
+
+
+
     sm = SMOTE(random_state=2)
     x_train_res, y_train_res = sm.fit_resample(post_patch_np_edit, mask_patch_np_edit)  # synthesized data:
-    unique, count = np.unique(y_train, return_counts=True)
-    #X_smote, y_smote = sm.fit_resample(X_train, y)
+    unique, count = np.unique(y_train_res, return_counts=True)
+    y_train_smote_value_count = {k: v for (k, v) in zip(unique, count)}
+    print("After SMOTE patches: " + str(y_train_smote_value_count))
+    display(True, x_train_res)
 
 """
 def alt_func(train_dataset):
